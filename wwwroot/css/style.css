@@ -1,0 +1,329 @@
+﻿/* =========================================
+   全体の初期化
+   =========================================*/
+:root {
+    /* 全体の背景色 */
+    --bg-color: #e8e9ea;
+    /* カードの背景色 */
+    --card-bg-color: #ffffff;
+    /* テーマ色 */
+    --theme-color: #ff6a00;
+    /* 文字色 */
+    --text-color: #333333;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Helvetica Neue', Arial, 'ヒラギノ角ゴ Pro W3', 'Meiryo', sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+}
+
+img {
+    min-width: 0;
+    width: 100%;
+}
+
+/* =========================================
+   ハンバーガーメニューの設定 
+   =========================================*/
+/* チェックボックスは非表示にする*/
+#menu-checkbox {
+    display: none;
+}
+
+/* インラインで直接表示する場合 */
+.hamburger-menu.display-inline {
+    .hamburger-icon {
+        display: none;
+    }
+
+    .nav-menu {
+        position: static;
+        width: 100%;
+        background-color: inherit;
+        padding-top: 0;
+
+        ul {
+            list-style: disc;
+            margin-left: 30px;
+
+            li {
+                margin-bottom: 8px;
+
+                a {
+                    padding: 0;
+                }
+            }
+        }
+    }
+}
+
+/* ハンバーガーメニュー内で表示する場合 */
+.hamburger-icon {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 70px;
+    height: 60px;
+    padding: 20px;
+    cursor: pointer;
+    z-index: 100;
+
+    span {
+        display: block;
+        height: 3px;
+        width: 100%;
+        background-color: #333;
+        border-radius: 2px;
+        /* アニメーション用 */
+        transition: all 0.3s ease;
+    }
+}
+
+/* メニューの本体（初期状態で非表示） */
+.nav-menu {
+    position: fixed;
+    top: 0;
+    /* 画面外右側に隠しておく */
+    right: -100%;
+    width: 250px;
+    height: 100vh;
+    background-color: #f8f9fa;
+    transition: right 0.3s ease;
+    /* ハンバーガーアイコンの高さ分の余白を確保 */
+    padding-top: 60px;
+
+    ul {
+        list-style: none;
+        padding: 0;
+
+        a {
+            display: block;
+            padding: 10px 20px;
+            text-decoration: none;
+        }
+    }
+}
+
+/* チェックが入った時のスタイル */
+#menu-checkbox:checked {
+    /* 右側に表示する */
+    ~ .nav-menu {
+        right: 0;
+    }
+    /* ハンバーガーアイコンのアニメーション */
+    /* アイコンを×印に変化 */
+    ~ .hamburger-icon span {
+        &:nth-child(1) {
+            /* 左上から右下へ*/
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        &:nth-child(2) {
+            /* 中央の線を非表示 */
+            opacity: 0;
+        }
+
+        &:nth-child(3) {
+            /* 左下から右上に */
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+    }
+}
+
+
+/* =========================================
+   ヘッダーの設定 
+   =========================================*/
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 8px #888;
+
+    .inner-header {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        max-width: 1000px;
+        height: 4.0rem;
+        margin: 0 auto;
+        padding-left: 4px;
+        font-size: 1.5rem;
+    }
+
+    a {
+        color: var(--text-color);
+        text-decoration: none;
+    }
+}
+
+/* =========================================
+   メインの設定 
+   =========================================*/
+.main {
+    max-width: 1000px;
+    margin: 0 auto;
+
+    h1 {
+        margin-bottom: 1.6rem;
+        padding: 0 8px;
+        border-bottom: 3px solid var(--text-color);
+        border-top: 3px solid var(--text-color);
+        background-color: var(--bg-color);
+    }
+
+    h2 {
+        margin: 0 0 30px;
+        border-bottom: 2px solid #333;
+        font-size: 1.8rem;
+    }
+
+    h3 {
+        border-bottom: 1px dashed #333;
+    }
+
+    .card {
+        margin: 0;
+        margin-bottom: 4px;
+        padding: 8px;
+        background-color: var(--card-bg-color);
+        border-bottom: 1px solid #d6d6d6;
+        border-right: 1px solid #d6d6d6;
+        box-shadow: 0 4px 3px -3px #adadad;
+        color: #323232;
+    }
+
+    label {
+        margin-right: 8px;
+    }
+
+    textarea {
+        width: 100%;
+        min-height: 150px;
+        padding: 10px;
+        border: 1px solid #888;
+        border-radius: 3px;
+        background: #fff;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 1rem;
+        line-height: 1.5;
+        resize: vertical;
+    }
+
+    input[type="text"] {
+        max-width: 200px;
+    }
+
+    input[type="number"] {
+        width: 70px;
+        padding: 6px 8px;
+        border: 1px solid #888;
+        border-radius: 3px;
+        font-size: 1rem;
+    }
+
+    input[type="checkbox"], input[type="radio"] {
+        margin-right: 8px;
+    }
+    /* :disabled 擬似クラスを使用 */
+    select option:disabled {
+        /* テキスト色をグレーに */
+        color: #999999;
+        display: none;
+    }
+    /* ボタン */
+    button {
+        padding: 8px 20px;
+        border: 1px solid #555;
+        border-radius: 3px;
+        background-color: #444;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+
+        &:hover {
+            background: #222;
+        }
+    }
+    /* ヴィジュネル方陣 */
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        margin-bottom: 2rem;
+
+        th, td {
+            padding: 2px 3px;
+        }
+    }
+
+    .vigenere-square {
+        border-collapse: collapse;
+        border: solid 1px var(--text-color);
+
+        tr:not(:last-child) {
+            border-bottom: solid 1px #bbb;
+        }
+
+        th, td {
+            text-align: center;
+
+            &:not(:last-child) {
+                border-right: solid 1px #ddd;
+            }
+        }
+
+        th, .key {
+            background-color: #666;
+            color: #fff;
+            font-weight: bold;
+        }
+    }
+    /* ロータたちとプラグボードたち */
+    .rotors, .plugboards, .reflector {
+        display: flex;
+        gap: 0 2rem;
+        flex-wrap: wrap;
+    }
+    /* 頻度分析 */
+    .frequencies {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        margin-bottom: 3rem;
+
+        dl {
+            display: flex;
+            gap: 6px;
+            margin: 0;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+
+            dt, dd {
+                margin: 0;
+                padding: 6px 8px;
+            }
+
+            dt {
+                padding-left: 15px;
+                padding-right: 15px;
+                background-color: #444;
+                color: #fff;
+                font-family: Consolas, "Courier New", monospace;
+                font-weight: bold;
+            }
+
+            dd {
+                text-align: right;
+            }
+        }
+    }
+}

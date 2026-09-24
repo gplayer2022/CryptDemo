@@ -1,0 +1,38 @@
+﻿@using Model;
+
+<section class="card">
+    <h2>復号化</h2>
+    <p>復号結果です。平文と同じものになっているはずです。</p>
+    <p>
+        <textarea readonly="readonly" @bind="@this.decryptedMessage"></textarea>
+    </p>
+</section>
+
+@code {
+    private string decryptedMessage;
+
+    /// <summary>
+    /// 暗号文
+    /// </summary>
+    [Parameter]
+    public string CryptedMessage
+    {
+        set; private get;
+    }
+    /// <summary>
+    /// 暗号器（復号専用）
+    /// </summary>
+    [Parameter]
+    public IDecryptable Cipher
+    {
+        set; private get;
+    }
+
+    /// <summary>
+    /// パラメータ変更時に処理する
+    /// </summary>
+    protected override void OnParametersSet()
+    {
+        this.decryptedMessage = Cipher.Decrypt(this.CryptedMessage);
+    }
+}

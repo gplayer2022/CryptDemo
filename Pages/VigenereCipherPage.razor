@@ -1,0 +1,81 @@
+﻿@page "/vigenerecipherpage/"
+@using CryptDemo.Components
+@using CryptDemo.Model
+
+<HeaderComponent />
+
+<main class="main">
+    <div class="card">
+        <h1>ヴィジュネル暗号</h1>
+        <p>
+            ヴィジュネル暗号は、シーザー暗号を拡張拡張し、複数のシーザー暗号を組み合わせて使用するものです。
+            キーワードを使用して、下記のようなヴィジュネル方陣を元に、各文字のシフト量を決定します。
+        </p>
+        <p>
+            ただし、ヴィジュネル暗号は鍵の周期性が大きな弱点になりました。
+        </p>
+        <div class="table-container">
+            <table class="vigenere-square">
+                <tr>
+                    <th>鍵</th>
+                    @for (int i = 0; i < Alphabet.AlphabetUpperString.Length; i++)
+                    {
+                        <th>@Alphabet.AlphabetUpperString[i]</th>
+                    }
+
+                </tr>
+                @for (int i = 0; i < Alphabet.AlphabetUpperString.Length; i++)
+                {
+                    <tr>
+                        <td class="key">@Alphabet.AlphabetUpperString[i]</td>
+                        @{
+                            this.CalcRotor(i);
+                        }
+                        @for (int j = 0; j < Alphabet.AlphabetUpperString.Length; j++)
+                        {
+                            <td>@this.rotor[j]</td>
+                        }
+
+                    </tr>
+                }
+            </table>
+        </div><!-- .table-container -->
+        <p>平文にひたすら「a」を入力すると、暗号文にキーの繰り返しが現れます。</p>
+    </div>
+
+    <VigenereCipherComponent OnEncrypted="@this.OnEncrypted" />
+    @if (this.cipher != null)
+    {
+        <DecryptorComponent Cipher="@this.cipher" CryptedMessage="@this.encryptedMessage" />
+    }
+    <FrequencyAnalyserComponent Message="@this.encryptedMessage" />
+</main>
+
+<Hamburger ShouldDisplayInline="false" />
+
+
+@code {
+    private string encryptedMessage = "";
+    private IDecryptable cipher;
+    private string rotor;
+
+    /// <summary>
+    /// 暗号化時に頻度分析器に渡す
+    /// </summary>
+    /// <param name="message"></param>
+    private void OnEncrypted(DecryptEventArgs decryptEventArgs)
+    {
+        this.encryptedMessage = decryptEventArgs.EncryptedMessage;
+        this.cipher = decryptEventArgs.Cipher;
+    }
+
+    /// <summary>
+    /// シフト量を集計する
+    /// </summary>
+    private void CalcRotor(int shift)
+    {
+        string alphabetString = Alphabet.AlphabetUpperString;
+        this.rotor = alphabetString[shift..alphabetString.Length];
+        this.rotor += alphabetString[0..shift];
+    }
+}

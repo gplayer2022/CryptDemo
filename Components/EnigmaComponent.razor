@@ -1,0 +1,340 @@
+﻿@using CryptDemo.Model;
+@inject HttpClient Http;
+
+<section class="card">
+    <h2>暗号化</h2>
+
+    <p>アルファベットを入力してください。アルファベット以外入力できません。</p>
+    <p><button @onclick="@this.ReadSampleData">サンプルデータ読込</button></p>
+    <p>
+        <textarea placeholder="ここに平文を入力してください" value="@this.message" @oninput="this.OnInputMessage"></textarea>
+    </p>
+    <div class="rotor-settings">
+        <h3>ロータの設定</h3>
+        <p>ロータは必ず 3 つ選択し、初期位置を設定してください。</p>
+        @{
+            string[] rotorSigns = new string[] { "I", "II", "III", "IV", "V", };
+        }
+        <div class="rotors">
+            @for (int i = 0; i < rotorSigns.Length; i++)
+            {
+                int rotorIndex = i;
+                <p>
+                    <label><input type="checkbox" @onchange='e => OnRotorSelected(e, rotorIndex)' />@rotorSigns[i]</label>
+                    <select @onchange='e => OnRotorPositionChanged(e, rotorIndex)'>
+                        @for (int j = 0; j < rotors[i].Length; j++)
+                        {
+                            if (j == 0)
+                            {
+                                <option value="@j" selected>@this.rotors[i][j]</option>
+                            }
+                            else
+                            {
+                                <option value="@j">@this.rotors[i][j]</option>
+                            }
+                        }
+                    </select>
+                </p>
+            }
+        </div><!-- .rotors -->
+    </div><!-- .rotor-settings -->
+    <div class="reflector-settings">
+        <h3>リフレクタの設定</h3>
+        @{
+            string[] reflectorSigns = new string[] { "A", "B", "C", };
+        }
+        <div class="reflector">
+            <InputRadioGroup @bind-Value="this.reflectorNumber">
+                @for (int i = 0; i < reflectorSigns.Length; i++)
+                {
+                    <label>
+                        <InputRadio Value="@i" />@reflectorSigns[i]
+                    </label>
+                }
+            </InputRadioGroup>
+        </div><!-- .reflector -->
+    </div>
+    <div class="plugboard-settings">
+        <h3>プラグボードの設定</h3>
+        <p>プラグは最大 13 本設定できます。全く設定しなくても構いません。</p>
+        <button @onclick="AddPlug" disabled="@(this.plugPairs.Count >= this.maxPlugCount)">ケーブル追加</button>
+        <button @onclick="RemovePlug" disabled="@(this.plugPairs.Count == 0)">ケーブル除去</button>
+        <div class="plugboards">
+            @for (int i = 0; i < this.plugPairs.Count; i++)
+            {
+                // クロージャ対策
+                int pairIndex = i;
+                <p>
+                    <select value="@(this.plugPairs[pairIndex].Left?.ToString() ?? "")"
+                            @onchange="e => this.OnPlugChanged(e, pairIndex, isLeft: true)">
+                        <option value="">--</option>
+                        @foreach (char letter in Alphabet.AlphabetUpperString)
+                        {
+                            <option value="@letter.ToString()"
+                                    disabled="@this.IsUsedElsewhere(letter, pairIndex, isLeft: true)">
+                                @letter
+                            </option>
+                        }
+                    </select>
+                    ⇔
+                    <select value="@(this.plugPairs[pairIndex].Right?.ToString() ?? "")"
+                            @onchange="e => this.OnPlugChanged(e, pairIndex, isLeft: false)">
+                        <option value="">--</option>
+                        @foreach (char letter in Alphabet.AlphabetUpperString)
+                        {
+                            <option value="@letter.ToString()"
+                                    disabled="@this.IsUsedElsewhere(letter, pairIndex, isLeft: false)">
+                                @letter
+                            </option>
+                        }
+                    </select>
+                </p>
+            }
+        </div><!-- .plugboards -->
+    </div><!-- plugboard-settings -->
+    <p>
+        <button @onclick="this.Encrypt">暗号化する</button>
+    </p>
+    <p>
+        <textarea readonly="readonly" @bind="@this.encryptedMessage"></textarea>
+    </p>
+</section>
+
+@code {
+    /// <summary>
+    /// プラグコードの上限 : 26 文字 / 2
+    /// </summary>
+    private readonly int maxPlugCount = 13;
+    /// <summary>
+    /// 平文
+    /// </summary>
+    private string message;
+    /// <summary>
+    /// 暗号文
+    /// </summary>
+    private string encryptedMessage;
+    /// <summary>
+    /// 設定可能ロータ
+    /// </summary>
+    private string[] rotors;
+    /// <summary>
+    /// 設定可能リフレクタ
+    /// </summary>
+    private string[] reflectors;
+    /// <summary>
+    /// 設定済プラグボード
+    /// </summary>
+    private List<Plugboard> plugboards = new List<Plugboard>();
+    /// <summary>
+    /// プラグ用配線たち
+    /// </summary>
+    private List<PlugPair> plugPairs = new List<PlugPair>();
+    /// <summary>
+    /// 設定済ロータ
+    /// </summary>
+    private List<int> selectedRotorNumbers = new List<int>();
+    /// <summary>
+    /// 設定済ロータの位置
+    /// </summary>
+    private List<int> selectedRotorPositions = new List<int> { 0, 0, 0, 0, 0, };
+    /// <summary>
+    /// 設定済リフレクタ
+    /// </summary>
+    private int reflectorNumber = 0;
+
+    /// <summary>
+    /// 親コンポーネントに暗号化済メッセージを渡すコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<DecryptEventArgs> OnEncrypted
+    {
+        set; private get;
+    }
+
+    /// <summary>
+    /// 初期化処理
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        Enigma enigma = new Enigma();
+        this.rotors = enigma.Rotors;
+        this.reflectors = enigma.Reflectors;
+    }
+
+    /// <summary>
+    /// ロータの選択
+    /// </summary>
+    /// <param name="e"></param>
+    /// <param name="rotorNumber">ロータ番号</param>
+    private void OnRotorSelected(ChangeEventArgs e, int rotorNumber)
+    {
+        if ((bool)e.Value)
+        {
+            this.selectedRotorNumbers.Add(rotorNumber);
+        }
+        else
+        {
+            this.selectedRotorNumbers.Remove(rotorNumber);
+        }
+    }
+
+    /// <summary>
+    /// ロータの回転位置が変更された場合
+    /// </summary>
+    /// <param name="e"></param>
+    /// <param name="i"></param>
+    private void OnRotorPositionChanged(ChangeEventArgs e, int i)
+    {
+        this.selectedRotorPositions[i] = int.Parse(e.Value?.ToString()!);
+    }
+
+    /// <summary>
+    /// プラグを追加する
+    /// </summary>
+    private void AddPlug()
+    {
+        if (this.plugPairs.Count < this.maxPlugCount)
+        {
+            this.plugPairs.Add(new PlugPair());
+        }
+    }
+
+    /// <summary>
+    /// プラグを外す
+    /// </summary>
+    private void RemovePlug()
+    {
+        if (0 < this.plugPairs.Count)
+        {
+            this.plugPairs.RemoveAt(this.plugPairs.Count - 1);
+        }
+    }
+
+    /// <summary>
+    /// プラグボード上の文字の選択
+    /// </summary>
+    /// <param name="e">変更イベント</param>
+    /// <param name="pairIndex">何本目のプラグか</param>
+    /// <param name="isLeft">プラグの左かどうか</param>
+    private void OnPlugChanged(ChangeEventArgs e, int pairIndex, bool isLeft)
+    {
+        string? value = e.Value?.ToString();
+        char? selectedChar = string.IsNullOrEmpty(value) ? null : value[0];
+        if (isLeft)
+        {
+            this.plugPairs[pairIndex].Left = selectedChar;
+        }
+        else
+        {
+            this.plugPairs[pairIndex].Right = selectedChar;
+        }
+    }
+
+    /// <summary>
+    /// 他のプラグで使用済みかどうか
+    /// </summary>
+    /// <param name="letter"></param>
+    /// <param name="pairIndex"></param>
+    /// <param name="isLeft"></param>
+    /// <returns>使用済かどうか</returns>
+    private bool IsUsedElsewhere(char letter, int pairIndex, bool isLeft)
+    {
+        bool isUsed = false;
+        for (int i = 0; i < this.plugPairs.Count; i++)
+        {
+            // 自分のケーブルの場合
+            if (i == pairIndex)
+            {
+                // 同じケーブルの反対側だけは比較対象に含める
+                char? counterpart = isLeft ? this.plugPairs[i].Right : this.plugPairs[i].Left;
+                if (counterpart == letter)
+                {
+                    isUsed = true;
+                    break;
+                }
+                // 自分自身の値は比較しない
+                continue;
+            }
+            // （他のケーブルで）文字がすでに存在している場合
+            if (this.plugPairs[i].Left == letter || this.plugPairs[i].Right == letter)
+            {
+                isUsed = true;
+                break;
+            }
+        }
+        return isUsed;
+    }
+
+    /// <summary>
+    /// サンプルデータをフェッチで読み込む
+    /// </summary>
+    /// <returns>サニタイズ済サンプルデータ</returns>
+    private async Task ReadSampleData()
+    {
+        string text = await Http.GetStringAsync("ref/alices-adventures.txt");
+        this.message = this.Sanitize(text);
+    }
+
+    /// <summary>
+    /// 暗号化する
+    /// </summary>
+    /// <returns></returns>
+    private async Task Encrypt()
+    {
+        if (!string.IsNullOrEmpty(this.message) && this.CheckSettings())
+        {
+            Enigma enigma = new Enigma(this.selectedRotorNumbers.ToArray(), this.selectedRotorPositions.ToArray(), this.reflectorNumber);
+            foreach (PlugPair plugPair in this.plugPairs)
+            {
+                if (plugPair.Left.HasValue && plugPair.Right.HasValue)
+                {
+                    enigma.AddPlugboardPlug(plugPair.Left.Value, plugPair.Right.Value);
+                }
+            }
+            this.encryptedMessage = enigma.Encrypt(this.message);
+
+            // 親コンポーネント経由で頻度分析器に渡す
+            DecryptEventArgs decryptEventArgs = new DecryptEventArgs(this.encryptedMessage, enigma);
+            await this.OnEncrypted.InvokeAsync(decryptEventArgs);
+        }
+    }
+
+    /// <summary>
+    /// エニグマの設定が正しく済んでいるかどうかを確認する
+    /// </summary>
+    /// <returns>設定済かどうか</returns>
+    private bool CheckSettings()
+    {
+        bool isValid = false;
+        if (this.selectedRotorNumbers.Count == 3)
+        {
+            isValid = true;
+        }
+        return isValid;
+    }
+
+    /// <summary>
+    /// 平文入力時のチェック
+    /// </summary>
+    /// <param name="e"></param>
+    private void OnInputMessage(ChangeEventArgs e)
+    {
+        string value = e.Value?.ToString() ?? "";
+        this.message = this.Sanitize(value);
+    }
+
+    /// <summary>
+    /// 余計な文字たちを除去する
+    /// </summary>
+    /// <param name="text">汚い文字列</param>
+    /// <returns>綺麗になった文字列</returns>
+    private string Sanitize(string text)
+    {
+        return new string(
+            text.Where(ch =>
+            {
+                return ('A' <= ch && ch <= 'Z') || ('a' <= ch && ch <= 'z');
+            }).ToArray()
+        );
+    }
+}

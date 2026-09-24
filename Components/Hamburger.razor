@@ -1,0 +1,40 @@
+﻿﻿<div class="hamburger-menu @(this.shouldDisplayInline ? "display-inline" : "")">
+    <!-- トグル用のチェックボックス-->
+    <input type="checkbox" id="menu-checkbox" />
+
+    <!-- 表示用ハンバーガーアイコン-->
+    <label for="menu-checkbox" class="hamburger-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+    </label>
+
+    <!-- ナビゲーションメニュー -->
+    <nav class="nav-menu">
+        <ul>
+            <li><a href="./">Home</a></li>
+            <li><a href="./caesarcipherpage/">シーザー暗号</a></li>
+            <li><a href="./vigenerecipherpage/">ヴィジュネル暗号</a></li>
+            <li><a href="./enigmapage/">エニグマ</a></li>
+        </ul>
+    </nav>
+</div>
+
+@code {
+    /// <summary>
+    /// 本文中にそのまま表示するかどうかのフラグ
+    /// </summary>
+    private bool shouldDisplayInline = false;
+
+    /// <summary>
+    /// 本文中にそのまま表示するかどうかのフラグ（プロパティ）
+    /// </summary>
+    [Parameter]
+    public bool ShouldDisplayInline
+    {
+        set
+        {
+            this.shouldDisplayInline = value;
+        }
+    }
+}

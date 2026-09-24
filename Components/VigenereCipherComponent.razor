@@ -1,0 +1,98 @@
+﻿@using CryptDemo.Model;
+@inject HttpClient Http;
+
+<section class="card">
+    <h2>暗号化</h2>
+
+    <p>アルファベットを入力してください。アルファベット以外入力できません。</p>
+    <p><button @onclick="@this.ReadSampleData">サンプルデータ読込</button></p>
+    <p>
+        <textarea placeholder="ここに平文を入力してください" value="@this.message" @oninput="this.OnInputMessage"></textarea>
+    </p>
+    <p>
+        <label for="key">キー : </label>
+        <input type="text" id="key" maxlength="25" value="@this.key" @oninput="this.OnInputKeyphrase" />
+    </p>
+    <p>
+        <button @onclick="this.Encrypt">暗号化する</button>
+    </p>
+    <p>
+        <textarea readonly="readonly" @bind="@this.encryptedMessage"></textarea>
+    </p>
+</section>
+
+@code {
+    private string message;
+    private string encryptedMessage;
+    private string key;
+
+    /// <summary>
+    /// 親コンポーネントに暗号化済メッセージを渡すコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<DecryptEventArgs> OnEncrypted
+    {
+        set; private get;
+    }
+
+    /// <summary>
+    /// サンプルデータをフェッチで読み込む
+    /// </summary>
+    /// <returns>サニタイズ済サンプルデータ</returns>
+    private async Task ReadSampleData()
+    {
+        string text = await Http.GetStringAsync("ref/alices-adventures.txt");
+        this.message = this.Sanitize(text);
+    }
+
+    /// <summary>
+    /// 暗号化する
+    /// </summary>
+    /// <returns></returns>
+    private async Task Encrypt()
+    {
+        if (!string.IsNullOrEmpty(this.message) && !string.IsNullOrEmpty(this.key))
+        {
+            VigenereCipher vigenereCipher = new VigenereCipher(this.key);
+            this.encryptedMessage = vigenereCipher.Encrypt(this.message);
+            // 親コンポーネント経由で頻度分析器に渡す
+            DecryptEventArgs decryptEventArgs = new DecryptEventArgs(this.encryptedMessage, vigenereCipher);
+            await this.OnEncrypted.InvokeAsync(decryptEventArgs);
+        }
+    }
+
+    /// <summary>
+    /// 平文入力時のチェック
+    /// </summary>
+    /// <param name="e"></param>
+    private void OnInputMessage(ChangeEventArgs e)
+    {
+        string value = e.Value?.ToString() ?? "";
+        this.message = this.Sanitize(value);
+    }
+
+    /// <summary>
+    /// キーフレーズ入力時のチェック
+    /// </summary>
+    /// <param name="e"></param>
+    private void OnInputKeyphrase(ChangeEventArgs e)
+    {
+        string value = e.Value?.ToString() ?? "";
+        this.key = this.Sanitize(value);
+    }
+
+    /// <summary>
+    /// 余計な文字たちを除去する
+    /// </summary>
+    /// <param name="text">汚い文字列</param>
+    /// <returns>綺麗になった文字列</returns>
+    private string Sanitize(string text)
+    {
+        return new string(
+            text.Where(ch =>
+            {
+                return ('A' <= ch && ch <= 'Z') || ('a' <= ch && ch <= 'z');
+            }).ToArray()
+        );
+    }
+}
