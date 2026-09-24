@@ -2,16 +2,36 @@
 @inject HttpClient Http;
 
 <section class="card">
-    <h2>暗号化</h2>
-
+    <!-- 暗号化 -->
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <h2>暗号化</h2>
+    }
+    else
+    {
+        <h2>復号化</h2>
+    }
+    
     <p>アルファベットを入力してください。アルファベット以外入力できません。</p>
-    <p><button @onclick="@this.ReadSampleData">サンプルデータ読込</button></p>
-    <p>
-        <textarea placeholder="ここに平文を入力してください" value="@this.message" @oninput="this.OnInputMessage"></textarea>
-    </p>
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <p><button @onclick="@this.ReadSampleData">サンプルデータ読込</button></p>
+        <p>
+            <textarea placeholder="ここに平文を入力してください" value="@this.message" @oninput="this.OnInputMessage"></textarea>
+        </p>
+    }
+    else
+    {
+        <p>
+            <textarea placeholder="ここに暗号文を入力してください" value="@this.encryptedMessage" @oninput="this.OnInputEncryptedMessage"></textarea>
+        </p>
+    }
     <div class="rotor-settings">
         <h3>ロータの設定</h3>
-        <p>ロータは必ず 3 つ選択し、初期位置を設定してください。</p>
+        <p>
+            ロータは必ず 3 つ選択し、初期位置を設定してください。
+            また、ロータをセット（チェック）する順も重要です。
+        </p>
         @{
             string[] rotorSigns = new string[] { "I", "II", "III", "IV", "V", };
         }
@@ -92,12 +112,24 @@
             }
         </div><!-- .plugboards -->
     </div><!-- plugboard-settings -->
-    <p>
-        <button @onclick="this.Encrypt">暗号化する</button>
-    </p>
-    <p>
-        <textarea readonly="readonly" @bind="@this.encryptedMessage"></textarea>
-    </p>
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <p>
+            <button @onclick="this.Encrypt">暗号化する</button>
+        </p>
+        <p>
+            <textarea readonly="readonly" @bind="@this.encryptedMessage"></textarea>
+        </p>
+    }
+    else
+    {
+        <p>
+            <button @onclick="this.Decrypt">復号化する</button>
+        </p>
+        <p>
+            <textarea readonly="readonly" @bind="@this.message"></textarea>
+        </p>
+    }
 </section>
 
 @code {
@@ -150,6 +182,14 @@
     {
         set; private get;
     }
+    /// <summary>
+    /// 暗号化・復号化モード
+    /// </summary>
+    [Parameter]
+    public Mode Mode
+    {
+        set; private get;
+    } = Mode.Encrypt;
 
     /// <summary>
     /// 初期化処理
@@ -300,6 +340,25 @@
     }
 
     /// <summary>
+    /// 復号化
+    /// </summary>
+    private void Decrypt()
+    {
+        if (!string.IsNullOrEmpty(this.encryptedMessage) && this.CheckSettings())
+        {
+            Enigma enigma = new Enigma(this.selectedRotorNumbers.ToArray(), this.selectedRotorPositions.ToArray(), this.reflectorNumber);
+            foreach (PlugPair plugPair in this.plugPairs)
+            {
+                if (plugPair.Left.HasValue && plugPair.Right.HasValue)
+                {
+                    enigma.AddPlugboardPlug(plugPair.Left.Value, plugPair.Right.Value);
+                }
+            }
+            this.message = enigma.Decrypt(this.encryptedMessage);
+        }
+    }
+
+    /// <summary>
     /// エニグマの設定が正しく済んでいるかどうかを確認する
     /// </summary>
     /// <returns>設定済かどうか</returns>
@@ -321,6 +380,16 @@
     {
         string value = e.Value?.ToString() ?? "";
         this.message = this.Sanitize(value);
+    }
+
+    /// <summary>
+    /// 暗号文入力時のチェック
+    /// </summary>
+    /// <param name="e"></param>
+    private void OnInputEncryptedMessage(ChangeEventArgs e)
+    {
+        string value = e.Value?.ToString() ?? "";
+        this.encryptedMessage = this.Sanitize(value);
     }
 
     /// <summary>

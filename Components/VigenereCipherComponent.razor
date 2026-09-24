@@ -2,23 +2,52 @@
 @inject HttpClient Http;
 
 <section class="card">
-    <h2>暗号化</h2>
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <h2>暗号化</h2>
+    }
+    else
+    {
+        <h2>復号化</h2>
+    }
 
     <p>アルファベットを入力してください。アルファベット以外入力できません。</p>
-    <p><button @onclick="@this.ReadSampleData">サンプルデータ読込</button></p>
-    <p>
-        <textarea placeholder="ここに平文を入力してください" value="@this.message" @oninput="this.OnInputMessage"></textarea>
-    </p>
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <p><button @onclick="@this.ReadSampleData">サンプルデータ読込</button></p>
+        <p>
+            <textarea placeholder="ここに平文を入力してください" value="@this.message" @oninput="this.OnInputMessage"></textarea>
+        </p>
+    }
+    else
+    {
+        <p>
+            <textarea placeholder="ここに暗号文を入力してください" value="@this.encryptedMessage" @oninput="this.OnInputEncryptedMessage"></textarea>
+        </p>
+    }
+
     <p>
         <label for="key">キー : </label>
         <input type="text" id="key" maxlength="25" value="@this.key" @oninput="this.OnInputKeyphrase" />
     </p>
-    <p>
-        <button @onclick="this.Encrypt">暗号化する</button>
-    </p>
-    <p>
-        <textarea readonly="readonly" @bind="@this.encryptedMessage"></textarea>
-    </p>
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <p>
+            <button @onclick="this.Encrypt">暗号化する</button>
+        </p>
+        <p>
+            <textarea readonly="readonly" @bind="@this.encryptedMessage"></textarea>
+        </p>
+    }
+    else
+    {
+        <p>
+            <button @onclick="this.Decrypt">復号化する</button>
+        </p>
+        <p>
+            <textarea readonly="readonly" @bind="@this.message"></textarea>
+        </p>
+    }
 </section>
 
 @code {
@@ -31,6 +60,12 @@
     /// </summary>
     [Parameter]
     public EventCallback<DecryptEventArgs> OnEncrypted
+    {
+        set; private get;
+    }
+
+    [Parameter]
+    public Mode Mode
     {
         set; private get;
     }
@@ -62,6 +97,18 @@
     }
 
     /// <summary>
+    /// 復号化する
+    /// </summary>
+    private void Decrypt()
+    {
+        if (!string.IsNullOrEmpty(this.encryptedMessage) && !string.IsNullOrEmpty(this.key))
+        {
+            VigenereCipher vigenereCipher = new VigenereCipher(this.key);
+            this.message = vigenereCipher.Decrypt(this.encryptedMessage);
+        }
+    }
+
+    /// <summary>
     /// 平文入力時のチェック
     /// </summary>
     /// <param name="e"></param>
@@ -69,6 +116,16 @@
     {
         string value = e.Value?.ToString() ?? "";
         this.message = this.Sanitize(value);
+    }
+
+    /// <summary>
+    /// 平文入力時のチェック
+    /// </summary>
+    /// <param name="e"></param>
+    private void OnInputEncryptedMessage(ChangeEventArgs e)
+    {
+        string value = e.Value?.ToString() ?? "";
+        this.encryptedMessage = this.Sanitize(value);
     }
 
     /// <summary>

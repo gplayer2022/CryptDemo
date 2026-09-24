@@ -1,4 +1,4 @@
-﻿@page "/enigmapage/"
+﻿@page "/enigmadecryptpage/"
 @using CryptDemo.Components
 @using CryptDemo.Model
 
@@ -6,10 +6,9 @@
 
 <main class="main">
     <div class="card">
-        <h1>エニグマ（暗号化）</h1>
+        <h1>エニグマ（復号化）</h1>
         <p>
-            エニグマは、第二次世界大戦中にドイツ軍が使用した暗号化装置で、回転ローターを使用してメッセージを暗号化します。
-            ヴィジュネル暗号の原理を複数回適用することで、複雑な暗号化を実現しています。
+            エニグマで暗号化された暗号文は、暗号時と同一設定で復号できます。
         </p>
         <p>
             ロータは全部で 5 つあり、この中から 3 つを選んでセットします。
@@ -52,10 +51,6 @@
             </table>
         </div><!-- .table-container -->
         <p>
-            重要なのはリフレクタです。
-            リフレクタは相互マッピングします。
-            例えば、「A」に対して「E」が対応する場合、「E」に対しては「A」が対応します。
-            このリフレクタの性質により、入力された文字は必ず異なる文字となって出力されます。
             リフレクタは 3 つあり、この中から 1 つを選んでセットする必要があります。
         </p>
         <div class="table-container">
@@ -85,22 +80,11 @@
             </table>
         </div><!-- .table-container -->
         <p>
-            プラグボードの設定は任意です。
-            エニグマの前面に任意の文字とそれとは異なる文字をペアで配線します。
-            ドイツ軍は 10 組のプラグを使用していたようです。
-        </p>
-        <p>
-            平文に、連続する同じ文字をひたすら入力してみてください。
-            頻度分析結果に、その文字の文字数が 0 になることが確認できるはずです。
+            プラグボードの設定も、暗号化時と同一設定にする必要があります。
         </p>
     </div>
 
-    <EnigmaComponent OnEncrypted="@this.OnEncrypted" />
-    @if (this.cipher != null)
-    {
-        <DecryptorComponent Cipher="@this.cipher" CryptedMessage="@this.encryptedMessage" />
-    }
-    <FrequencyAnalyserComponent Message="@this.encryptedMessage" />
+    <EnigmaComponent Mode="@Mode.DecryptOnly" />
 </main>
 
 <Hamburger ShouldDisplayInline="false" />
@@ -120,15 +104,5 @@
         Enigma enigma = new Enigma();
         this.rotors = enigma.Rotors;
         this.reflectors = enigma.Reflectors;
-    }
-
-    /// <summary>
-    /// 暗号化時に頻度分析器に渡す
-    /// </summary>
-    /// <param name="message"></param>
-    private void OnEncrypted(DecryptEventArgs decryptEventArgs)
-    {
-        this.encryptedMessage = decryptEventArgs.EncryptedMessage;
-        this.cipher = decryptEventArgs.Cipher;
     }
 }

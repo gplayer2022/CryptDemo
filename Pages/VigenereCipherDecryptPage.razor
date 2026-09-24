@@ -1,0 +1,24 @@
+﻿@page "/vigenerecipherdecryptpage/"
+@using CryptDemo.Components
+@using CryptDemo.Model
+
+<HeaderComponent />
+
+<main class="main">
+    <div class="card">
+        <h1>ヴィジュネル暗号（復号化）</h1>
+        <p>
+            ヴィジュネル暗号は、シーザー暗号を拡張拡張し、複数のシーザー暗号を組み合わせて使用するものです。
+            復号するには、暗号化時と同じキーワードを設定してください。。
+        </p>
+    </div>
+
+    <VigenereCipherComponent Mode="@Mode.DecryptOnly" />
+</main>
+
+<Hamburger ShouldDisplayInline="false" />
+
+
+@code {
+
+}

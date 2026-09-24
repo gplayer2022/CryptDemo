@@ -147,6 +147,8 @@ namespace CryptDemo.Model
         /// <returns>暗号化された文字</returns>
         private char Encrypt(char c)
         {
+            // ロータの位置を回転（修正：このメソッド末での回転から、メソッド開始時に変更）
+            this.RotateRotors();
             char currentChar = c;
             int index;
             AlphabetCase alphabetCase = this.CheckAlphabetCase(c, out index);
@@ -164,22 +166,24 @@ namespace CryptDemo.Model
                 index = (index + this.rotorPositions[i]) % Alphabet.AlphabetStringLength;
                 currentChar = this.rotors[i].Dial[index];
                 index = Alphabet.AlphabetUpperString.IndexOf(currentChar);
+                index = (index - this.rotorPositions[i] + Alphabet.AlphabetStringLength) % Alphabet.AlphabetStringLength;
             }
             // リフレクターを通過
             currentChar = this.reflector[index];
+            index = Alphabet.AlphabetUpperString.IndexOf(currentChar);
             // ロータを逆に通過
             for (int i = this.rotors.Count - 1; 0 <= i; i--)
             {
-                index = (this.rotors[i].Dial.IndexOf(currentChar) - this.rotorPositions[i] +
-                    Alphabet.AlphabetStringLength) % Alphabet.AlphabetStringLength;
-                currentChar = Alphabet.AlphabetUpperString[index];
+                char shiftedChar = Alphabet.AlphabetUpperString[
+                    (index + this.rotorPositions[i]) % Alphabet.AlphabetStringLength];
+                index = (this.rotors[i].Dial.IndexOf(shiftedChar) - this.rotorPositions[i]
+                    + Alphabet.AlphabetStringLength) % Alphabet.AlphabetStringLength;
             }
+            currentChar = Alphabet.AlphabetUpperString[index];
             // プラグボードを逆に通過
             currentChar = this.plugboard.PassThrough(currentChar);
             index = Alphabet.AlphabetUpperString.IndexOf(char.ToUpper(currentChar));
             currentChar = this.GetAlphabetChar(alphabetCase, index);
-            // ロータの位置を回転
-            this.RotateRotors();
             return currentChar;
         }
 

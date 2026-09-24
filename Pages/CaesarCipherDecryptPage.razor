@@ -1,0 +1,23 @@
+﻿@page "/caesarcipherdecryptpage/"
+@using CryptDemo.Components
+@using CryptDemo.Model
+
+<HeaderComponent />
+
+<main class="main">
+    <div class="card">
+        <h1>シーザー暗号（復号化）</h1>
+        <p>
+            シフト数とキーフレーズは、暗号化時と同じように設定してください。
+        </p>
+    </div>
+
+    <CaesarCipherComponent Mode="@Mode.DecryptOnly" />
+</main>
+
+<Hamburger ShouldDisplayInline="false" />
+
+
+@code {
+
+}
