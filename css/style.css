@@ -36,6 +36,10 @@ img {
     display: none;
 }
 
+/*.hamburger-menu {
+    height: 100vh;
+}*/
+
 /* インラインで直接表示する場合 */
 .hamburger-menu.display-inline {
     .hamburger-icon {
@@ -100,6 +104,10 @@ img {
     transition: right 0.3s ease;
     /* ハンバーガーアイコンの高さ分の余白を確保 */
     padding-top: 60px;
+
+    h2, h3 {
+        margin-left: 20px;
+    }
 
     ul {
         list-style: none;
