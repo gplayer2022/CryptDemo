@@ -254,8 +254,8 @@ namespace CryptDemo.Model
         /// </summary>
         private void RotateRotors()
         {
-            bool isMiddleAtNotch = this.rotorPositions[1] == this.rotors[1].Dial.IndexOf(this.rotors[1].Notch);
-            bool isRightAtNotch = this.rotorPositions[0] == this.rotors[0].Dial.IndexOf(this.rotors[0].Notch);
+            bool isMiddleAtNotch = this.rotorPositions[1] == Alphabet.AlphabetUpperString.IndexOf(this.rotors[1].Notch);
+            bool isRightAtNotch = this.rotorPositions[0] == Alphabet.AlphabetUpperString.IndexOf(this.rotors[0].Notch);
             // 右ロータは常に回転する
             this.rotorPositions[0] = ++this.rotorPositions[0] % Alphabet.AlphabetStringLength;
             // 中央ロータのみ右ロータか中央ロータがノッチ位置にある場合に回転する（ダブルステップ）
