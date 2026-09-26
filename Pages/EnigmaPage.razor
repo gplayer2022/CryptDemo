@@ -36,14 +36,16 @@
         </div><!-- .with-figure -->
         <div class="table-container">
             <table class="table">
-                <tr>
-                    <th>ロータ</th>
-                    @for (int i = 0; i < Alphabet.AlphabetUpperString.Length; i++)
-                    {
-                        <th>@Alphabet.AlphabetUpperString[i]</th>
-                    }
-                    <th>導入年</th>
-                </tr>
+                <thead>
+                    <tr>
+                        <th>ロータ</th>
+                        @for (int i = 0; i < Alphabet.AlphabetUpperString.Length; i++)
+                        {
+                            <th>@Alphabet.AlphabetUpperString[i]</th>
+                        }
+                        <th>導入年</th>
+                    </tr>
+                </thead>
                 @{
                     // ロータ番号
                     string[] rotorNumbers = new string[]
@@ -56,17 +58,19 @@
                         "1930", "1930", "1930", "1938", "1938",
                     };
                 }
-                @for (int i = 0; i < this.rotors.Length; i++)
-                {
-                    <tr>
-                        <td class="key">@rotorNumbers[i]</td>
-                        @for (int j = 0; j < this.rotors[i].Length; j++)
-                        {
-                            <td>@this.rotors[i][j]</td>
-                        }
-                        <td>@years[i]</td>
-                    </tr>
-                }
+                <tbody>
+                    @for (int i = 0; i < this.rotors.Length; i++)
+                    {
+                        <tr>
+                            <td class="key">@rotorNumbers[i]</td>
+                            @for (int j = 0; j < this.rotors[i].Length; j++)
+                            {
+                                <td>@this.rotors[i][j]</td>
+                            }
+                            <td>@years[i]</td>
+                        </tr>
+                    }
+                </tbody>
             </table>
         </div><!-- .table-container -->
         <p>
@@ -78,28 +82,32 @@
         </p>
         <div class="table-container">
             <table class="table">
-                <tr>
-                    <th>リフレクタ</th>
-                    @for (int i = 0; i < Alphabet.AlphabetUpperString.Length; i++)
-                    {
-                        <th>@Alphabet.AlphabetUpperString[i]</th>
-                    }
-                </tr>
+                <thead>
+                    <tr>
+                        <th>リフレクタ</th>
+                        @for (int i = 0; i < Alphabet.AlphabetUpperString.Length; i++)
+                        {
+                            <th>@Alphabet.AlphabetUpperString[i]</th>
+                        }
+                    </tr>
+                </thead>
                 @{
                     string reflectorSigns = "ABC";
                 }
-                @for (int i = 0; i < reflectorSigns.Length; i++)
-                {
-                    <tr>
-                        <td class="key">@reflectorSigns[i]</td>
-                        @for (int j = 0; j < this.reflectors[i].Length; j++)
-                        {
-                            <td>
-                                @this.reflectors[i][j]
-                            </td>
-                        }
-                    </tr>
-                }
+                <tbody>
+                    @for (int i = 0; i < reflectorSigns.Length; i++)
+                    {
+                        <tr>
+                            <td class="key">@reflectorSigns[i]</td>
+                            @for (int j = 0; j < this.reflectors[i].Length; j++)
+                            {
+                                <td>
+                                    @this.reflectors[i][j]
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
             </table>
         </div><!-- .table-container -->
         <p>
