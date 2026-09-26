@@ -1,5 +1,4 @@
-﻿// wwwroot/js/aesCrypto.js
-export async function encrypt(keyBytes, plainText) {
+﻿export async function encrypt(keyBytes, plainText) {
     const key = await crypto.subtle.importKey(
         "raw", new Uint8Array(keyBytes), { name: "AES-CBC" }, false, ["encrypt"]);
     const iv = crypto.getRandomValues(new Uint8Array(16));
