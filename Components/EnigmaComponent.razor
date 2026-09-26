@@ -11,7 +11,7 @@
     {
         <h2>復号化</h2>
     }
-    
+
     <p>アルファベットを入力してください。アルファベット以外入力できません。</p>
     @if (this.Mode == Mode.Encrypt)
     {
@@ -30,32 +30,85 @@
         <h3>ロータの設定</h3>
         <p>
             ロータは必ず 3 つ選択し、初期位置を設定してください。
-            また、ロータをセット（チェック）する順も重要です。
+            ロータはチェック順で右からセットします。
         </p>
         @{
             string[] rotorSigns = new string[] { "I", "II", "III", "IV", "V", };
         }
-        <div class="rotors">
-            @for (int i = 0; i < rotorSigns.Length; i++)
-            {
-                int rotorIndex = i;
-                <p>
-                    <label><input type="checkbox" @onchange='e => OnRotorSelected(e, rotorIndex)' />@rotorSigns[i]</label>
-                    <select @onchange='e => OnRotorPositionChanged(e, rotorIndex)'>
-                        @for (int j = 0; j < rotors[i].Length; j++)
+        <div class="rotors table-container">
+            <table class="vigenere-square">
+                <thead>
+                    <tr>
+                        <th>項目</th>
+                        @for (int i = 0; i < rotorSigns.Length; i++)
                         {
-                            if (j == 0)
-                            {
-                                <option value="@j" selected>@Alphabet.AlphabetUpperString[j]</option>
-                            }
-                            else
-                            {
-                                <option value="@j">@Alphabet.AlphabetUpperString[j]</option>
-                            }
+                            <th>@rotorSigns[i]</th>
                         }
-                    </select>
-                </p>
-            }
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>
+                            設置
+                        </th>
+                        @for (int i = 0; i < rotorSigns.Length; i++)
+                        {
+                            int rotorIndex = i;
+                            <td>
+                                <input type="checkbox" @onchange='e => OnRotorSelected(e, rotorIndex)' />
+                            </td>
+                        }
+                    </tr>
+                    <tr>
+                        <th>
+                            リング
+                        </th>
+                        @for (int i = 0; i < rotorSigns.Length; i++)
+                        {
+                            int rotorIndex = i;
+                            <td>
+                                <select @onchange='e => OnRingPositionChanged(e, rotorIndex)'>
+                                    @for (int j = 0; j < rotors[i].Length; j++)
+                                    {
+                                        if (j == 0)
+                                        {
+                                            <option value="@j" selected>@Alphabet.AlphabetUpperString[j]</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@j">@Alphabet.AlphabetUpperString[j]</option>
+                                        }
+                                    }
+                                </select>
+                            </td>
+                        }
+                    </tr>
+                    <tr>
+                        <th>
+                            開始
+                        </th>
+                        @for (int i = 0; i < rotorSigns.Length; i++)
+                        {
+                            int rotorIndex = i;
+                            <td>
+                                <select @onchange='e => OnRotorPositionChanged(e, rotorIndex)'>
+                                    @for (int j = 0; j < rotors[i].Length; j++)
+                                    {
+                                        if (j == 0)
+                                        {
+                                            <option value="@j" selected>@Alphabet.AlphabetUpperString[j]</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@j">@Alphabet.AlphabetUpperString[j]</option>
+                                        }
+                                    }
+                                </select>
+                            </td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
         </div><!-- .rotors -->
     </div><!-- .rotor-settings -->
     <div class="reflector-settings">
@@ -166,9 +219,13 @@
     /// </summary>
     private List<int> selectedRotorNumbers = new List<int>();
     /// <summary>
-    /// 設定済ロータの位置
+    /// 設定済ロータの開始位置
     /// </summary>
-    private List<int> selectedRotorPositions = new List<int> { 0, 0, 0, 0, 0, };
+    private List<int> rotorPositions = new List<int> { 0, 0, 0, 0, 0, };
+    /// <summary>
+    /// 設定済みリングの位置
+    /// </summary>
+    private List<int> ringPositions = new List<int> { 0, 0, 0, 0, 0, };
     /// <summary>
     /// 設定済リフレクタ
     /// </summary>
@@ -219,13 +276,23 @@
     }
 
     /// <summary>
-    /// ロータの回転位置が変更された場合
+    /// ロータの初期位置が変更された場合
     /// </summary>
     /// <param name="e"></param>
     /// <param name="i"></param>
     private void OnRotorPositionChanged(ChangeEventArgs e, int i)
     {
-        this.selectedRotorPositions[i] = int.Parse(e.Value?.ToString()!);
+        this.rotorPositions[i] = int.Parse(e.Value?.ToString()!);
+    }
+
+    /// <summary>
+    /// リングの設置位置が変更された場合
+    /// </summary>
+    /// <param name="e"></param>
+    /// <param name="i"></param>
+    private void OnRingPositionChanged(ChangeEventArgs e, int i)
+    {
+        this.ringPositions[i] = int.Parse(e.Value?.ToString()!);
     }
 
     /// <summary>
@@ -323,7 +390,9 @@
     {
         if (!string.IsNullOrEmpty(this.message) && this.CheckSettings())
         {
-            Enigma enigma = new Enigma(this.selectedRotorNumbers.ToArray(), this.selectedRotorPositions.ToArray(), this.reflectorNumber);
+            Enigma enigma = new Enigma(
+                this.selectedRotorNumbers.ToArray(), this.ExtractRotorPositions(),
+                this.ExtractRingPositions(), this.reflectorNumber);
             foreach (PlugPair plugPair in this.plugPairs)
             {
                 if (plugPair.Left.HasValue && plugPair.Right.HasValue)
@@ -346,7 +415,9 @@
     {
         if (!string.IsNullOrEmpty(this.encryptedMessage) && this.CheckSettings())
         {
-            Enigma enigma = new Enigma(this.selectedRotorNumbers.ToArray(), this.selectedRotorPositions.ToArray(), this.reflectorNumber);
+            Enigma enigma = new Enigma(
+                this.selectedRotorNumbers.ToArray(), this.ExtractRotorPositions(),
+                this.ExtractRingPositions(), this.reflectorNumber);
             foreach (PlugPair plugPair in this.plugPairs)
             {
                 if (plugPair.Left.HasValue && plugPair.Right.HasValue)
@@ -370,6 +441,38 @@
             isValid = true;
         }
         return isValid;
+    }
+
+    /// <summary>
+    /// ロータ位置を抽出する
+    /// </summary>
+    /// <returns>抽出されたロータ位置</returns>
+    private int[] ExtractRotorPositions()
+    {
+        int[] extractedRotorPositions = new int[this.selectedRotorNumbers.Count];
+        int i = 0;
+        foreach (int selectedRotorNumber in this.selectedRotorNumbers)
+        {
+            extractedRotorPositions[i] = this.rotorPositions[selectedRotorNumber];
+            i++;
+        }
+        return extractedRotorPositions;
+    }
+
+    /// <summary>
+    /// リング位置を抽出する
+    /// </summary>
+    /// <returns></returns>
+    private int[] ExtractRingPositions()
+    {
+        int[] extractedRingPositions = new int[this.selectedRotorNumbers.Count];
+        int i = 0;
+        foreach (int selectedRotorNumber in this.selectedRotorNumbers)
+        {
+            extractedRingPositions[i] = this.ringPositions[selectedRotorNumber];
+            i++;
+        }
+        return extractedRingPositions;
     }
 
     /// <summary>

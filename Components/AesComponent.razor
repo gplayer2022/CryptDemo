@@ -1,0 +1,164 @@
+﻿@using System.Security.Cryptography;
+@using System.Text;
+@using CryptDemo.Model;
+@inject HttpClient Http;
+
+<section class="card">
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <h2>暗号化</h2>
+    }
+    else
+    {
+        <h2>復号化</h2>
+    }
+
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <p>文字列を入力してください。</p>
+        <p><button @onclick="@this.ReadSampleData">サンプルデータ読込</button></p>
+        <p>
+            <textarea placeholder="ここに平文を入力してください" @bind="@this.message"></textarea>
+        </p>
+    }
+    else
+    {
+        <p>暗号文を入力してください。暗号文は Base64 文字でなければなりません。</p>
+        <p>
+            <textarea placeholder="ここに暗号文を入力してください" value="@this.encryptedMessage" @oninput="this.OnInputEncryptedMessage"></textarea>
+        </p>
+    }
+
+    <p>
+        <label for="key">キー : </label>
+        <input type="text" id="key" maxlength="25" value="@this.key" @oninput="this.OnInputKeyphrase" />
+    </p>
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <p>
+            <button @onclick="this.Encrypt">暗号化する</button>
+        </p>
+        <p>
+            <textarea readonly="readonly" @bind="@this.encryptedMessage"></textarea>
+        </p>
+    }
+    else
+    {
+        <p>
+            <button @onclick="this.Decrypt">復号化する</button>
+        </p>
+        <p>
+            <textarea readonly="readonly" @bind="@this.message"></textarea>
+        </p>
+    }
+</section>
+
+@code {
+    private string message;
+    private string encryptedMessage;
+    private string key;
+
+    /// <summary>
+    /// 親コンポーネントに暗号化済メッセージを渡すコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<DecryptEventArgs> OnEncrypted
+    {
+        set; private get;
+    }
+
+    [Parameter]
+    public Mode Mode
+    {
+        set; private get;
+    }
+
+    /// <summary>
+    /// サンプルデータをフェッチで読み込む
+    /// </summary>
+    /// <returns>サニタイズ済サンプルデータ</returns>
+    private async Task ReadSampleData()
+    {
+        string text = await Http.GetStringAsync("ref/alices-adventures.txt");
+        this.message = text;
+    }
+
+    /// <summary>
+    /// 暗号化する
+    /// </summary>
+    /// <returns></returns>
+    private async Task Encrypt()
+    {
+        if (!string.IsNullOrEmpty(this.message) && !string.IsNullOrEmpty(this.key))
+        {
+            AesCipher aesCipher = new AesCipher(this.HashKey(this.key));
+            this.encryptedMessage = aesCipher.Encrypt(this.message);
+            // 親コンポーネント経由で頻度分析器に渡す
+            DecryptEventArgs decryptEventArgs = new DecryptEventArgs(this.encryptedMessage, aesCipher);
+            await this.OnEncrypted.InvokeAsync(decryptEventArgs);
+        }
+    }
+
+    /// <summary>
+    /// 復号化する
+    /// </summary>
+    private void Decrypt()
+    {
+        if (!string.IsNullOrEmpty(this.encryptedMessage) && !string.IsNullOrEmpty(this.key))
+        {
+            AesCipher aesCipher = new AesCipher(this.HashKey(this.key));
+            this.message = aesCipher.Decrypt(this.encryptedMessage);
+        }
+    }
+
+    /// <summary>
+    /// 暗号文入力時のチェック
+    /// </summary>
+    /// <param name="e"></param>
+    private void OnInputEncryptedMessage(ChangeEventArgs e)
+    {
+        string value = e.Value?.ToString() ?? "";
+        this.encryptedMessage = this.Sanitize(value);
+    }
+
+    /// <summary>
+    /// キーフレーズ入力時のチェック
+    /// </summary>
+    /// <param name="e"></param>
+    private void OnInputKeyphrase(ChangeEventArgs e)
+    {
+        string value = e.Value?.ToString() ?? "";
+        this.key = this.Sanitize(value);
+    }
+
+    /// <summary>
+    /// 余計な文字たちを除去する
+    /// </summary>
+    /// <param name="text">汚い文字列</param>
+    /// <returns>綺麗になった文字列</returns>
+    private string Sanitize(string text)
+    {
+        return new string(
+            text.Where(ch =>
+            {
+                return ('A' <= ch && ch <= 'Z') || ('a' <= ch && ch <= 'z') ||
+                ('0' <= ch && ch <= '9') || ch == '+' || ch == '/' || ch == '=';
+            }).ToArray()
+        );
+    }
+
+    /// <summary>
+    /// キーをハッシュ化する
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    private byte[] HashKey(string key)
+    {
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] keyButes = Encoding.UTF8.GetBytes(key);
+            byte[] hashBytes = sha256.ComputeHash(keyButes);
+            return hashBytes;
+        }
+    }
+}

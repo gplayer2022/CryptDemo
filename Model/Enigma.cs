@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Runtime.InteropServices;
+using System.Text;
 
 namespace CryptDemo.Model
 {
@@ -49,6 +50,10 @@ namespace CryptDemo.Model
         /// ロータの現在位置たち
         /// </summary>
         private int[] rotorPositions = new int[Enigma.routorsCount];
+        /// <summary>
+        /// リングの設置位置
+        /// </summary>
+        private int[] ringPositions = new int[Enigma.routorsCount];
 
         /// <summary>
         /// ロータたち
@@ -93,12 +98,14 @@ namespace CryptDemo.Model
         /// </summary>
         /// <param name="rotorNumbers">設置するロータたち</param>
         /// <param name="rotorPositions">ロータの初期位置</param>
+        /// <param name="ringPositions">リングの設定たち</param>
         /// <param name="reflectorNumber">リフレクタ</param>
-        internal Enigma(int[] rotorNumbers, int[] rotorPositions, int reflectorNumber)
+        internal Enigma(int[] rotorNumbers, int[] rotorPositions, int[] ringPositions, int reflectorNumber)
         {
             this.SetRotors(rotorNumbers);
-            this.rotorInitialPositions = (int[])rotorPositions.Clone();
-            this.rotorPositions = (int[])rotorPositions.Clone();
+            // 窓の初期位置とリング設定から内部的な開始位置を計算する
+            this.InitializeRotorPositions(rotorPositions, ringPositions);
+            this.ringPositions = (int[])ringPositions;
             this.plugboard = new Plugboard();
             this.reflector = this.reflectors[reflectorNumber];
         }
@@ -250,12 +257,32 @@ namespace CryptDemo.Model
         }
 
         /// <summary>
+        /// 窓の初期位置とリング設定から内部的な開始位置を計算する
+        /// </summary>
+        /// <param name="rotorPositions"></param>
+        /// <param name="ringPositions"></param>
+        private void InitializeRotorPositions(int[] rotorPositions, int[] ringPositions)
+        {
+            for (int i = 0; i < Enigma.routorsCount; i++)
+            {
+                this.rotorInitialPositions[i] =
+                    (rotorPositions[i] - ringPositions[i] + Alphabet.AlphabetStringLength) %
+                    Alphabet.AlphabetStringLength;
+            }
+            this.rotorPositions = (int[])this.rotorInitialPositions.Clone();
+        }
+
+        /// <summary>
         /// ロータを回転させる
         /// </summary>
         private void RotateRotors()
         {
-            bool isMiddleAtNotch = this.rotorPositions[1] == Alphabet.AlphabetUpperString.IndexOf(this.rotors[1].Notch);
-            bool isRightAtNotch = this.rotorPositions[0] == Alphabet.AlphabetUpperString.IndexOf(this.rotors[0].Notch);
+            bool isMiddleAtNotch = this.rotorPositions[1] ==
+                (Alphabet.AlphabetUpperString.IndexOf(this.rotors[1].Notch) -
+                this.ringPositions[1] + Alphabet.AlphabetStringLength) % Alphabet.AlphabetStringLength;
+            bool isRightAtNotch = this.rotorPositions[0] ==
+                (Alphabet.AlphabetUpperString.IndexOf(this.rotors[0].Notch) -
+                this.ringPositions[0] + Alphabet.AlphabetStringLength) % Alphabet.AlphabetStringLength;
             // 右ロータは常に回転する
             this.rotorPositions[0] = ++this.rotorPositions[0] % Alphabet.AlphabetStringLength;
             // 中央ロータのみ右ロータか中央ロータがノッチ位置にある場合に回転する（ダブルステップ）

@@ -1,0 +1,97 @@
+﻿@page "/aespage/"
+@using CryptDemo.Components
+@using CryptDemo.Model
+
+<PageTitle>AES（暗号化） | CryptDemo</PageTitle>
+
+<HeaderComponent />
+
+<main class="main">
+    <div class="card">
+        <h1>AES（暗号化）</h1>
+        <p>
+            AES(Advanced Encryption Standard) は、アメリカ国立標準技術研究所が公開公募により選定した標準暗号です。
+            疑似的に AES 暗号の概要を 4 ビットのデータと 4 ビットの鍵で示した場合、下記のようになります。
+        </p>
+        <ol>
+            <li>
+                初期化ベクトルを乱数で生成
+                <ul>
+                    <li>
+                        <code>iv = 0110</code>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                平文と初期化ベクトルを XOR
+                <ul>
+                    <li>
+                        <code>plainText = 1100</code>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                さらに鍵と XOR
+                <ul>
+                    <li>
+                        <code>key = 1010</code>
+                        <code>step3 = step2 XOR key</code>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                置換箱を使用して置換
+                <ul>
+                    <li>
+                        <code>step4 = substitutionBox[step3]</code>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                暗号文の上位 4 ビットに初期化ベクトルを追記
+                <ul>
+                    <li>
+                        <code>step5 = (iv &lt;&lt; 4)</code>
+                        <code>encryptedText = step4 | step5</code>
+                    </li>
+                </ul>
+            </li>
+        </ol>
+        <p>
+            XOR （排他的論理和）は、鍵を使って暗号化した暗号文を、同じ鍵で再度 XOR することで元の平文に戻すことができるという特徴を持っています。
+            <code>plainText XOR key => encryptedText</code> の場合、 <code>encryptedText XOR key => plainText</code> になります。
+        </p>
+        <p>
+            さらにアバランシェ効果（雪崩効果）を持たせるために、置換箱を使用します。
+        </p>
+        <p>
+            なお AES の鍵は 16 、 24 、 32 バイトのいずれかでなければなりません。
+            英数字の場合は 1 文字 1 バイトです。
+        </p>
+    </div>
+
+    <AesComponent OnEncrypted="@this.OnEncrypted" />
+    @if (this.cipher != null)
+    {
+        <DecryptorComponent Cipher="@this.cipher" CryptedMessage="@this.encryptedMessage" />
+    }
+    <FrequencyAnalyserComponent Message="@this.encryptedMessage" />
+</main>
+
+<Hamburger ShouldDisplayInline="false" />
+
+
+@code {
+    private string encryptedMessage = "";
+    private IDecryptable cipher;
+
+    /// <summary>
+    /// 暗号化時に頻度分析器に渡す
+    /// </summary>
+    /// <param name="message"></param>
+    private void OnEncrypted(DecryptEventArgs decryptEventArgs)
+    {
+        this.encryptedMessage = decryptEventArgs.EncryptedMessage;
+        this.cipher = decryptEventArgs.Cipher;
+    }
+}
