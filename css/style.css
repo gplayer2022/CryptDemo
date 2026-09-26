@@ -263,7 +263,7 @@ img {
             background: #222;
         }
     }
-    /* ヴィジュネル方陣 */
+    /* テーブルレイアウト */
     .table-container {
         width: 100%;
         overflow-x: auto;
@@ -274,7 +274,7 @@ img {
         }
     }
 
-    .vigenere-square {
+    .table {
         border-collapse: collapse;
         border: solid 1px var(--text-color);
 
@@ -295,6 +295,17 @@ img {
             color: #fff;
             font-weight: bold;
         }
+    }
+
+    .with-figure {
+        display: flex;
+
+        figcaption {
+            font-size: 0.6rem;
+        }
+    }
+    .warning {
+        color: #be4141;
     }
     /* ロータたちとプラグボードたち */
     .rotors, .plugboards, .reflector {
@@ -333,5 +344,11 @@ img {
                 text-align: right;
             }
         }
+    }
+}
+
+@media (max-width: 500px) {
+    .with-figure {
+        flex-direction: column;
     }
 }
