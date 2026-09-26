@@ -180,7 +180,7 @@
         <p>
             <button @onclick="this.Decrypt">復号化する</button>
         </p>
-        <p class="warning">@this.warning</p>
+
         <p>
             <textarea readonly="readonly" @bind="@this.message"></textarea>
         </p>
@@ -422,7 +422,7 @@
     /// <summary>
     /// 復号化
     /// </summary>
-    private async void Decrypt()
+    private async Task Decrypt()
     {
         this.warning = "";
         if (!string.IsNullOrEmpty(this.encryptedMessage) && this.CheckSettings())
