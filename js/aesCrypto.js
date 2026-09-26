@@ -6,7 +6,7 @@ export async function encrypt(keyBytes, plainText) {
     //   new Unit8Array(keyBytes): Blazor からは `number[]` のような形で渡されがち。`byte[]` 相当のものに変換
     //   { name: "AES-CBC", }: アルゴリズムの指定
     //   false: 鍵を後から取り出せるようにするかどうか
-    //   ["encrypt", ]: この鍵で許可する陽とのリスト。ここでは暗号化のみ
+    //   ["encrypt", ]: この鍵で許可する用途のリスト。ここでは暗号化のみ
     const cryptoKey = await crypto.subtle.importKey(
         "raw", new Uint8Array(keyBytes), { name: "AES-CBC", }, false, ["encrypt",]);
     // 初期化ベクトル作成
