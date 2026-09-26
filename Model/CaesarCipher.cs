@@ -115,10 +115,11 @@ namespace CryptDemo.Model
         /// </summary>
         /// <param name="text">暗号文</param>
         /// <returns>復号文</returns>
-        public virtual string Decrypt(string text)
+        public virtual Task<string> DecryptAsync(string text)
         {
             // shift 戻ることと (26 - shift) 進むことは同じ
-            return this.Encrypt(text, Alphabet.AlphabetStringLength - this.shift);
+            return Task.FromResult(
+                this.Encrypt(text, Alphabet.AlphabetStringLength - this.shift));
         }
 
         /// <summary>

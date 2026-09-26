@@ -9,25 +9,33 @@
 <main class="main">
     <div class="card">
         <h1>エニグマ（暗号化）</h1>
-        <p>
-            エニグマは、第二次世界大戦中にドイツ軍が使用した暗号化装置で、回転ローターを使用してメッセージを暗号化します。
-            ヴィジュネル暗号の原理を複数回適用することで、複雑な暗号化を実現しています。
-        </p>
-        <p>
-            ロータは全部で 5 つあり、この中から 3 つを選んでセットします。
-            セットする順も重要です。
-            ロータは設置位置以外に、次の 2 つの設定が必要です。
-        </p>
-        <p>
-            第一にロータの外側にアルファベット順のリングを外装します。
-            リングを外装する際には、外装の位置を決める必要があります。
-            これがロータの見かけ上のアルファベット列になります。
-        </p>
-        <p>
-            第二にリングを外装した後の見かけ上の開始位置を決定します。
-        </p>
+        <div class="with-figure">
+            <div class="article">
+                <p>
+                    エニグマは、第二次世界大戦中にドイツ軍が使用した暗号化装置で、回転ローターを使用してメッセージを暗号化します。
+                    ヴィジュネル暗号の原理を複数回適用することで、複雑な暗号化を実現しています。
+                </p>
+                <p>
+                    ロータは全部で 5 つあり、この中から 3 つを選んでセットします。
+                    セットする順も重要です。
+                    ロータは設置位置以外に、次の 2 つの設定が必要です。
+                </p>
+                <p>
+                    第一にロータの外側にアルファベット順のリングを外装します。
+                    リングを外装する際には、外装の位置を決める必要があります。
+                    これがロータの見かけ上のアルファベット列になります。
+                </p>
+                <p>
+                    第二にリングを外装した後にロータをエニグマに設置したときの見かけ上の開始位置を決定します。
+                </p>
+            </div>
+            <figure>
+                <img src="images/EnigmaMachineLabeled.webp" alt="エニグマ" />
+                <figcaption>エニグマ暗号器（ウィキペディアより）</figcaption>
+            </figure>
+        </div><!-- .with-figure -->
         <div class="table-container">
-            <table class="vigenere-square">
+            <table class="table">
                 <tr>
                     <th>ロータ</th>
                     @for (int i = 0; i < Alphabet.AlphabetUpperString.Length; i++)
@@ -69,7 +77,7 @@
             リフレクタは 3 つあり、この中から 1 つを選んでセットする必要があります。
         </p>
         <div class="table-container">
-            <table class="vigenere-square">
+            <table class="table">
                 <tr>
                     <th>リフレクタ</th>
                     @for (int i = 0; i < Alphabet.AlphabetUpperString.Length; i++)

@@ -29,14 +29,14 @@
     <div class="rotor-settings">
         <h3>ロータの設定</h3>
         <p>
-            ロータは必ず 3 つ選択し、初期位置を設定してください。
+            ロータは必ず 3 つ選択し、リングと初期位置を設定してください。
             ロータはチェック順でエニグマ本体の右側からセットします。
         </p>
         @{
             string[] rotorSigns = new string[] { "I", "II", "III", "IV", "V", };
         }
         <div class="rotors table-container">
-            <table class="vigenere-square">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>項目</th>
@@ -170,6 +170,7 @@
         <p>
             <button @onclick="this.Encrypt">暗号化する</button>
         </p>
+        <p class="warning">@this.warning</p>
         <p>
             <textarea readonly="readonly" @bind="@this.encryptedMessage"></textarea>
         </p>
@@ -179,6 +180,7 @@
         <p>
             <button @onclick="this.Decrypt">復号化する</button>
         </p>
+        <p class="warning">@this.warning</p>
         <p>
             <textarea readonly="readonly" @bind="@this.message"></textarea>
         </p>
@@ -230,6 +232,10 @@
     /// 設定済リフレクタ
     /// </summary>
     private int reflectorNumber = 0;
+    /// <summary>
+    /// 設定エラー告知用メッセージ
+    /// </summary>
+    private string warning = "";
 
     /// <summary>
     /// 親コンポーネントに暗号化済メッセージを渡すコールバック
@@ -388,6 +394,7 @@
     /// <returns></returns>
     private async Task Encrypt()
     {
+        this.warning = "";
         if (!string.IsNullOrEmpty(this.message) && this.CheckSettings())
         {
             Enigma enigma = new Enigma(
@@ -406,13 +413,18 @@
             DecryptEventArgs decryptEventArgs = new DecryptEventArgs(this.encryptedMessage, enigma);
             await this.OnEncrypted.InvokeAsync(decryptEventArgs);
         }
+        else
+        {
+            this.warning = "平文未設定またはエニグマの設定が不適切です。";
+        }
     }
 
     /// <summary>
     /// 復号化
     /// </summary>
-    private void Decrypt()
+    private async void Decrypt()
     {
+        this.warning = "";
         if (!string.IsNullOrEmpty(this.encryptedMessage) && this.CheckSettings())
         {
             Enigma enigma = new Enigma(
@@ -425,7 +437,11 @@
                     enigma.AddPlugboardPlug(plugPair.Left.Value, plugPair.Right.Value);
                 }
             }
-            this.message = enigma.Decrypt(this.encryptedMessage);
+            this.message = await enigma.DecryptAsync(this.encryptedMessage);
+        }
+        else
+        {
+            this.warning = "暗号文未設定またはエニグマの設定が不適切です。";
         }
     }
 

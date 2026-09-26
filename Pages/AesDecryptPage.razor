@@ -1,5 +1,25 @@
-﻿<h3>AesDecryptPage</h3>
+﻿@page "/aesdecryptpage/"
+@using CryptDemo.Components
+@using CryptDemo.Model
+
+<PageTitle>AES（復号化） | CryptDemo</PageTitle>
+
+<HeaderComponent />
+
+<main class="main">
+    <div class="card">
+        <h1>AES（復号化）</h1>
+        <p>
+            先頭に初期化ベクトルが追記された暗号文を利用してください。
+            暗号文は Base64 で文字列化されたものを指定し、キーワードは暗号化時と同じものを設定する必要があります。
+        </p>
+    </div>
+
+    <AesComponent Mode="@Mode.DecryptOnly" />
+</main>
+
+<Hamburger ShouldDisplayInline="false" />
+
 
 @code {
-
 }

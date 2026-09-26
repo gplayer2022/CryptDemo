@@ -44,7 +44,7 @@
         /// </summary>
         /// <param name="text">暗号文</param>
         /// <returns>復号化された平文</returns>
-        public override string Decrypt(string text)
+        public override Task<string> DecryptAsync(string text)
         {
             string decryptedText = "";
             int index = 0;
@@ -53,7 +53,7 @@
                 decryptedText += base.Decrypt(c, this.shifts[index]);
                 index = ++index % this.shifts.Length;
             }
-            return decryptedText;
+            return Task.FromResult(decryptedText);
         }
 
         /// <summary>

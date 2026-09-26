@@ -140,11 +140,11 @@ namespace CryptDemo.Model
         /// </summary>
         /// <param name="text">暗号文</param>
         /// <returns>復号化された平文</returns>
-        public string Decrypt(string text)
+        public Task<string> DecryptAsync(string text)
         {
             this.rotorPositions = (int[])this.rotorInitialPositions.Clone();
             // Enigma の暗号化と復号化は同じ処理を行うため、Encrypt メソッドを呼び出す
-            return this.Encrypt(text);
+            return Task.FromResult(this.Encrypt(text));
         }
 
         /// <summary>

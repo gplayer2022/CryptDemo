@@ -31,8 +31,8 @@
     /// <summary>
     /// パラメータ変更時に処理する
     /// </summary>
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        this.decryptedMessage = Cipher.Decrypt(this.CryptedMessage);
+        this.decryptedMessage = await Cipher.DecryptAsync(this.CryptedMessage);
     }
 }

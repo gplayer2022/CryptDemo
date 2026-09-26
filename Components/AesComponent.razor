@@ -1,7 +1,9 @@
 ﻿@using System.Security.Cryptography;
 @using System.Text;
 @using CryptDemo.Model;
+@implements IAsyncDisposable;
 @inject HttpClient Http;
+@inject IJSRuntime JS;
 
 <section class="card">
     @if (this.Mode == Mode.Encrypt)
@@ -47,6 +49,7 @@
         <p>
             <button @onclick="this.Decrypt">復号化する</button>
         </p>
+        <p class="warning">@this.warning</p>
         <p>
             <textarea readonly="readonly" @bind="@this.message"></textarea>
         </p>
@@ -54,9 +57,11 @@
 </section>
 
 @code {
+    private IJSObjectReference? jsModule;
     private string message;
     private string encryptedMessage;
     private string key;
+    private string warning;
 
     /// <summary>
     /// 親コンポーネントに暗号化済メッセージを渡すコールバック
@@ -71,6 +76,15 @@
     public Mode Mode
     {
         set; private get;
+    }
+
+    /// <summary>
+    /// JS モジュール読込初期化
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        this.jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/aesCrypto.js");
     }
 
     /// <summary>
@@ -89,10 +103,12 @@
     /// <returns></returns>
     private async Task Encrypt()
     {
-        if (!string.IsNullOrEmpty(this.message) && !string.IsNullOrEmpty(this.key))
+        this.encryptedMessage = "";
+        if (!string.IsNullOrEmpty(this.message) &&
+            !string.IsNullOrEmpty(this.key) && this.jsModule is not null)
         {
-            AesCipher aesCipher = new AesCipher(this.HashKey(this.key));
-            this.encryptedMessage = aesCipher.Encrypt(this.message);
+            AesCipher aesCipher = new AesCipher(this.jsModule, this.key);
+            this.encryptedMessage = await aesCipher.EncryptAsync(this.message);
             // 親コンポーネント経由で頻度分析器に渡す
             DecryptEventArgs decryptEventArgs = new DecryptEventArgs(this.encryptedMessage, aesCipher);
             await this.OnEncrypted.InvokeAsync(decryptEventArgs);
@@ -102,13 +118,39 @@
     /// <summary>
     /// 復号化する
     /// </summary>
-    private void Decrypt()
+    private async void Decrypt()
     {
-        if (!string.IsNullOrEmpty(this.encryptedMessage) && !string.IsNullOrEmpty(this.key))
-        {
-            AesCipher aesCipher = new AesCipher(this.HashKey(this.key));
-            this.message = aesCipher.Decrypt(this.encryptedMessage);
+        this.message = "";
+        this.warning = "";
+        if (!this.IsValidBase64(this.encryptedMessage)) {
+            this.warning = "暗号文のフォーマットが不適切です。";
         }
+        else if (!string.IsNullOrEmpty(this.encryptedMessage) &&
+            !string.IsNullOrEmpty(this.key) &&
+            this.jsModule is not null)
+        {
+            try
+            {
+                AesCipher aesCipher = new AesCipher(this.jsModule, this.key);
+                this.message = await aesCipher.DecryptAsync(this.encryptedMessage);
+            }
+            catch (Exception ex)
+            {
+                this.warning = "復号に失敗しました。暗号文または鍵を確認してください。";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Base64 形式かどうかをチェックする
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    private bool IsValidBase64(string text)
+    {
+        // 十分な大きさを確保
+        Span<byte> buffer = new byte[(text.Length * 3) / 4];
+        return Convert.TryFromBase64Chars(text, buffer, out _);
     }
 
     /// <summary>
@@ -148,17 +190,15 @@
     }
 
     /// <summary>
-    /// キーをハッシュ化する
+    /// JS モジュール廃棄処理
     /// </summary>
-    /// <param name="key"></param>
     /// <returns></returns>
-    private byte[] HashKey(string key)
+    public async ValueTask DisposeAsync()
     {
-        using (SHA256 sha256 = SHA256.Create())
+        if (this.jsModule is not null)
         {
-            byte[] keyButes = Encoding.UTF8.GetBytes(key);
-            byte[] hashBytes = sha256.ComputeHash(keyButes);
-            return hashBytes;
+            await this.jsModule.DisposeAsync();
+            this.jsModule = null;
         }
     }
 }

@@ -99,12 +99,12 @@
     /// <summary>
     /// 復号化する
     /// </summary>
-    private void Decrypt()
+    private async void Decrypt()
     {
         if (!string.IsNullOrEmpty(this.encryptedMessage) && !string.IsNullOrEmpty(this.key))
         {
             VigenereCipher vigenereCipher = new VigenereCipher(this.key);
-            this.message = vigenereCipher.Decrypt(this.encryptedMessage);
+            this.message = await vigenereCipher.DecryptAsync(this.encryptedMessage);
         }
     }
 

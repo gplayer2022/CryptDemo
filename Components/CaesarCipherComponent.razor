@@ -109,7 +109,7 @@
     /// <summary>
     /// 復号化する
     /// </summary>
-    private void Decrypt()
+    private async void Decrypt()
     {
         if (!string.IsNullOrEmpty(this.encryptedMessage))
         {
@@ -117,7 +117,7 @@
             CaesarCipher caesarCipher;
             this.keyphrase = string.IsNullOrEmpty(this.keyphrase) ? "" : this.keyphrase;
             caesarCipher = new CaesarCipher(this.shift, this.keyphrase);
-            this.message = caesarCipher.Decrypt(this.encryptedMessage);
+            this.message = await caesarCipher.DecryptAsync(this.encryptedMessage);
         }
     }
 
