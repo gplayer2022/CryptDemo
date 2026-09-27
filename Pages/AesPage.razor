@@ -28,6 +28,14 @@
                     <li>
                         <code>plainText = 1100</code>
                     </li>
+                    <li>
+                        <code>step2 = plainText XOR iv</code>
+                        <ul>
+                            <li>
+                                <code>step2</code> は <code>1010</code>
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
             <li>
@@ -38,6 +46,11 @@
                     </li>
                     <li>
                         <code>step3 = step2 XOR key</code>
+                        <ul>
+                            <li>
+                                <code>step3</code> は <code>0000</code>
+                            </li>
+                        </ul>
                     </li>
                 </ul>
             </li>
@@ -45,7 +58,12 @@
                 置換箱を使用して置換
                 <ul>
                     <li>
-                        <code>step4 = substitutionBox[step3]</code>
+                        <code>step4 = substitutionBox(step3)</code>
+                        <ul>
+                            <li>
+                                次のステップのために <code>step4</code> を仮に <code>1100</code> とおく
+                            </li>
+                        </ul>
                     </li>
                 </ul>
             </li>
@@ -54,9 +72,19 @@
                 <ul>
                     <li>
                         <code>step5 = (iv &lt;&lt; 4)</code>
+                        <ul>
+                            <li>
+                                <code>step5</code> は <code>0110_0000</code>
+                            </li>
+                        </ul>
                     </li>
                     <li>
-                        <code>encryptedText = step4 | step5</code>
+                        <code>encryptedText = step4 OR step5</code>
+                        <ul>
+                            <li>
+                                <code>encryptedText</code> は <code>0110_1100</code>
+                            </li>
+                        </ul>
                     </li>
                 </ul>
             </li>
