@@ -1,0 +1,217 @@
+﻿@page "/rsapage/"
+@using CryptDemo.Components
+@using CryptDemo.Model
+
+<PageTitle>RSA（暗号化） | CryptDemo</PageTitle>
+
+<HeaderComponent />
+
+<main class="main">
+    <div class="card">
+        <h1>RSA（暗号化）</h1>
+        <p>
+            RSA暗号は巨大な数の素因数分解が非常に難しいという性質を利用した、公開鍵暗号方式のアルゴリズムです。
+        </p>
+        <p>
+            公開鍵暗号方式では、公開鍵と秘密鍵のペアを使って、暗号化および復号化を行ないます。
+            原理的には、公開鍵と秘密鍵は対称性と持っています。
+            平文を公開鍵で暗号化した暗号文は秘密鍵で復号でき、平文を秘密鍵で暗号化した暗号文は公開鍵で復号できます。
+            ただし秘密鍵による暗号化は、暗号化とは呼ばず、デジタル署名と呼びます。
+            公開鍵と秘密鍵は利用目的が異なります。
+        </p>
+        <h2>疑似RSA</h2>
+        <p>
+            以下では小さな素数を使って RSA の仕組みを解説します。
+        </p>
+        <p>
+            RSAには5つの数が登場します。
+        </p>
+        <ul>
+            <li>
+                <code>p, q</code>： 秘密に選ぶ2つの素数
+            </li>
+            <li>
+                <code>n</code>： <code>p * q</code> で求める数。公開してよい
+            </li>
+            <li>
+                <code>e</code>： 公開する指数。公開鍵の一部
+            </li>
+            <li>
+                <code>d</code>： 秘密にする指数。秘密鍵の一部
+            </li>
+        </ul>
+        <p>
+            最終的な公開鍵と秘密鍵は次のようになります。
+        </p>
+        <ul>
+            <li><code>公開鍵 = (n, e)</code></li>
+            <li><code>秘密鍵 = (n, d)</code></li>
+        </ul>
+        <h3>鍵ペア作成手順</h3>
+        <p>
+            疑似的に小さな素数を使って公開鍵と秘密鍵を生成する手順を示すと以下のようになります。
+        </p>
+        <ol>
+            <li>
+                素数 <code>p</code> と <code>q</code> を選択
+                <ul>
+                    <li>
+                        <code>p = 5</code>
+                    </li>
+                    <li>
+                        <code>q = 11</code>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                素数の積 <code>n</code> を計算
+                <ul>
+                    <li>
+                        <code>n = p * q</code>
+                        <ul>
+                            <li>
+                                <code>n = 5 * 11 = 55</code>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                オイラーのトーシェント関数 <code>φ(n)</code> を求める。
+                これにより <code>1</code> から <code>n</code> までの整数の内 <code>n</code> と互いに素なものの個数を求める
+                <ul>
+                    <li>
+                        <code>1, 2, 3, 4, 6, 7, 8, 9, 12, 13, 14, 16, 17, 18, 19, 21, 23, 24, 26, 27, 28, 29, 31, 32, 34, 36, 37, 
+                            38, 39, 41, 42, 43, 46, 47, 48, 49, 51, 52, 53, 54</code>
+                    </li>
+                    <li>
+                        <code>φ(n) = 40</code>
+                        <ul>
+                            <li>
+                                これは <code>φ(n) = (p - 1)(q - 1)</code> で求まる
+                            </li>
+                            <li>
+                                <code>φ(n) = (p - 1)(q - 1) = 4 * 10 = 40</code>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                次の条件を満たすように、公開指数 <code>e</code> を選択する
+                <ul>
+                    <li>
+                        <code>1 &lt; e &lt; φ(n)</code> で <code>e</code> と <code>φ(n)</code> は互いに素
+                        <ul>
+                            <li>ここでは <code>e = 3</code> とする。通常は小さい素数</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                モジュラ逆元により秘密指数 <code>d</code> を求める
+                <ul>
+                    <li>
+                        <code>e * d ≡ 1 mod φ(n)</code>
+                        <ul>
+                            <li>
+                                <code>3 * d ≡ 1 mod 40</code>
+                            </li>
+                            <li>
+                                <code>3 * d</code> を <code>40</code> で割って、余りが <code>1</code> になるような <code>d</code> を求める
+                            </li>
+                            <li>
+                                <code>d = 27</code>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                公開鍵と秘密鍵が決まる
+                <ul>
+                    <li>公開鍵: <code>(n, e) = (55, 3)</code></li>
+                    <li>秘密鍵: <code>(n, d) = (55, 27)</code></li>
+                </ul>
+            </li>
+        </ol>
+        <h3>暗号化手順</h3>
+        <p>暗号化の手順は次の通りです。</p>
+        <ol>
+            <li>
+                平文を公開鍵で暗号化する
+                <ul>
+                    <li>
+                        平文 <code>m = 7</code> を公開鍵 <code>(n, e) = (55, 3)</code> で暗号化
+                    </li>
+                    <li>
+                        <code>c = m^e mod n = 7^3 mod 55 = 13</code>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                暗号文を秘密鍵で復号する
+                <ul>
+                    <li>
+                        暗号文 <code>c = 13</code> を秘密鍵 <code>(n, d) = (55, 27)</code> で復号化
+                    </li>
+                    <li>
+                        <code>m = c^d mod n = 13^27 mod 55 = 7</code>
+                    </li>
+                </ul>
+            </li>
+        </ol>
+        <h3>署名手順</h3>
+        <p>署名の手順も同様です。</p>
+        <ol>
+            <li>
+                平文を秘密鍵で暗号化し署名値を得る
+                <ul>
+                    <li>
+                        平文 <code>m = 7</code> を秘密鍵 <code>(n, d) = (55, 27)</code> で暗号化
+                    </li>
+                    <li>
+                        <code>s = m^d mod n = 7^27 mod 55 = 28</code>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                署名を公開鍵で復号する
+                <ul>
+                    <li>
+                        署名 <code>s = 28</code> を公開鍵 <code>(n, e) = (55, 3)</code> で復号化
+                    </li>
+                    <li>
+                        <code>m = s^e mod n = 28^3 mod 55 = 7</code>
+                    </li>
+                </ul>
+            </li>
+        </ol>
+        <p>ただし実際の署名は、平文そのものに対してではなく、平文のハッシュ値に対して実行されます。</p>
+    </div>
+
+    <RsaComponent OnEncrypted="@this.OnEncrypted" />
+    @if (this.cipher != null)
+    {
+        <DecryptorComponent Cipher="@this.cipher" CryptedMessage="@this.encryptedMessage" />
+    }
+    <FrequencyAnalyserComponent Message="@this.encryptedMessage" />
+</main>
+
+<Hamburger ShouldDisplayInline="false" />
+
+
+@code {
+    private string encryptedMessage = "";
+    private IDecryptable cipher;
+
+    /// <summary>
+    /// 暗号化時に頻度分析器に渡す
+    /// </summary>
+    /// <param name="message"></param>
+    private void OnEncrypted(DecryptEventArgs decryptEventArgs)
+    {
+        this.encryptedMessage = decryptEventArgs.EncryptedMessage;
+        this.cipher = decryptEventArgs.Cipher;
+    }
+}

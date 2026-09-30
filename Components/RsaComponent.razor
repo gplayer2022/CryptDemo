@@ -1,0 +1,199 @@
+﻿@using System.Security.Cryptography;
+@using System.Text;
+@using CryptDemo.Model;
+@inject HttpClient Http;
+@inject IJSRuntime JS;
+
+<section class="card">
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <h2>暗号化</h2>
+    }
+    else
+    {
+        <h2>復号化</h2>
+    }
+
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <p>
+            平文を公開鍵を使って暗号化します。
+        </p>
+        <p>
+            文字列を入力してください。最大 @this.maxMessageLength 字までしか入力できません。
+            RSAは仕様上、長文を暗号化できません。
+        </p>
+        <p><button @onclick="@this.ReadSampleData">サンプルデータ読込</button></p>
+        <p>
+            <textarea placeholder="ここに平文を入力してください" @bind="@this.message" maxlength="@this.maxMessageLength"></textarea>
+        </p>
+    }
+    else
+    {
+        <p>暗号文を入力してください。暗号文は Base64 文字でなければなりません。</p>
+        <p>
+            <textarea placeholder="ここに暗号文を入力してください" @bind="@this.encryptedMessage"></textarea>
+        </p>
+    }
+
+    <p>鍵は JSON 形式で取得されます。</p>
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <p>
+            <button @onclick="this.GetKeys">鍵を作成する</button>
+        </p>
+        <p>
+            <label for="publicKey">公開鍵 : </label>
+            <textarea id="publicKey" readonly="readonly" @bind="@this.publicKey"></textarea>
+        </p>
+        <p>
+            <label for="secretKey">秘密鍵 : </label>
+            <textarea id="secretKey" readonly="readonly" @bind="@this.secretKey"></textarea>
+        </p>
+    }
+    else
+    {
+        <p>
+            <label for="secretKey">秘密鍵 : </label>
+            <textarea id="secretKey" @bind="@this.secretKey"></textarea>
+        </p>
+    }
+
+    @if (this.Mode == Mode.Encrypt)
+    {
+        <p>
+            <button @onclick="this.Encrypt">暗号化する</button>
+        </p>
+        <p>
+            <textarea readonly="readonly" @bind="@this.encryptedMessage"></textarea>
+        </p>
+    }
+    else
+    {
+        <p>
+            <button @onclick="this.Decrypt">復号化する</button>
+        </p>
+        <p class="warning">@this.warning</p>
+        <p>
+            <textarea readonly="readonly" @bind="@this.message"></textarea>
+        </p>
+    }
+</section>
+
+@code {
+    private readonly int maxMessageLength = 60;
+    private IJSObjectReference? jsModule;
+    private string message;
+    private string encryptedMessage;
+    private string publicKey;
+    private string secretKey;
+    private string warning;
+    private RsaCipher rsaCipher;
+
+    /// <summary>
+    /// 親コンポーネントに暗号化済メッセージを渡すコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<DecryptEventArgs> OnEncrypted
+    {
+        set; private get;
+    }
+
+    [Parameter]
+    public Mode Mode
+    {
+        set; private get;
+    } = Mode.Encrypt;
+
+    /// <summary>
+    /// サンプルデータをフェッチで読み込む
+    /// </summary>
+    /// <returns>サニタイズ済サンプルデータ</returns>
+    private async Task ReadSampleData()
+    {
+        string text = await Http.GetStringAsync("ref/alices-adventures.txt");
+        this.message = text.Substring(0, this.maxMessageLength);
+    }
+
+    /// <summary>
+    /// 初期化
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        this.jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/rsaCrypto.js");
+        this.rsaCipher = await RsaCipher.CreateAsync(this.jsModule);
+    }
+
+    /// <summary>
+    /// 鍵ペアを取得する
+    /// </summary>
+    private void GetKeys()
+    {
+        this.publicKey = this.rsaCipher.PublicKey;
+        this.secretKey = this.rsaCipher.SecretKey;
+    }
+
+    /// <summary>
+    /// 暗号化する
+    /// </summary>
+    /// <returns></returns>
+    private async Task Encrypt()
+    {
+        this.encryptedMessage = "";
+        if (!string.IsNullOrEmpty(this.message) &&
+            !string.IsNullOrEmpty(this.publicKey) &&
+            !string.IsNullOrEmpty(this.secretKey) &&
+            this.rsaCipher is not null)
+        {
+            // 文字長を調整する
+            if (this.maxMessageLength < this.message.Length)
+            {
+                this.message = this.message.Substring(0, maxMessageLength);
+            }
+            this.encryptedMessage = await this.rsaCipher.Encrypt(this.message);
+            // 親コンポーネント経由で頻度分析器に渡す
+            DecryptEventArgs decryptEventArgs = new DecryptEventArgs(this.encryptedMessage, this.rsaCipher);
+            await this.OnEncrypted.InvokeAsync(decryptEventArgs);
+        }
+    }
+
+    /// <summary>
+    /// 復号化する
+    /// </summary>
+    private async Task Decrypt()
+    {
+        this.message = "";
+        this.warning = "";
+        if (!this.IsValidBase64(this.encryptedMessage))
+        {
+            this.warning = "暗号文のフォーマットが不適切です。";
+        }
+        else if (!string.IsNullOrEmpty(this.encryptedMessage) &&
+            !string.IsNullOrEmpty(this.secretKey) &&
+            this.jsModule is not null)
+        {
+            try
+            {
+                this.rsaCipher.SecretKey = this.secretKey;
+                this.message = await rsaCipher.DecryptAsync(this.encryptedMessage);
+            }
+            catch (Exception ex)
+            {
+                this.warning = "復号に失敗しました。暗号文または鍵を確認してください。";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Base64 形式かどうかをチェックする
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    private bool IsValidBase64(string text)
+    {
+        // 十分な大きさを確保
+        Span<byte> buffer = new byte[(text.Length * 3) / 4];
+        return Convert.TryFromBase64Chars(text, buffer, out _);
+    }
+}
