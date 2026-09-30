@@ -304,10 +304,31 @@ img {
             font-size: 0.6rem;
         }
     }
+
     .warning {
         color: #be4141;
     }
     /* ロータたちとプラグボードたち */
+    .rotor-setting-state {
+        margin-top: -20px;
+
+        .guide {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .each-rotor {
+            display: inline-block;
+            width: 2rem;
+            margin: 0 6px;
+            font-weight: bold;
+            text-align: center;
+            border: solid #888 1px;
+            background-color: #bbb;
+/*            color: #fff;*/
+        }
+    }
+
     .rotors, .plugboards, .reflector {
         display: flex;
         gap: 0 2rem;
