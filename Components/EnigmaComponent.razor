@@ -110,6 +110,17 @@
                 </tbody>
             </table>
         </div><!-- .rotors -->
+        <p class="rotor-setting-state">
+            <span class="guide">ロータのセット状態：</span>
+            @for (int i = this.selectedRotorNumbers.Count - 1; 0 <= i; i--)
+            {
+                <span class="each-rotor">@rotorSigns[this.selectedRotorNumbers[i]]</span>
+                @if (i != 0)
+                {
+                    <span>-</span>
+                }
+            }
+        </p>
     </div><!-- .rotor-settings -->
     <div class="reflector-settings">
         <h3>リフレクタの設定</h3>
