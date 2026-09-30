@@ -1,4 +1,6 @@
-﻿// AESで暗号化
+﻿import { bytesToBinaryString, } from './common.js';
+
+// AESで暗号化
 export async function encrypt(keyBytes, plainText) {
     // crypto.subtle: ブラウザ標準の Crypto API
     // importKey(): 生のバイト列を暗号処理で利用可能な CryptoKey オブジェクトに変換する
@@ -26,18 +28,6 @@ export async function encrypt(keyBytes, plainText) {
     combined.set(new Uint8Array(cipherBuffer), iv.length);
     // Base64に変換して返す
     return btoa(bytesToBinaryString(combined));
-}
-
-// バイト列をブラウザ制約にかからないように展開する
-function bytesToBinaryString(bytes) {
-    // 32768。上限(65536)の半分程度に安全マージンを取る
-    const chunkSize = 0x8000;
-    let binary = "";
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-        const chunk = bytes.subarray(i, i + chunkSize);
-        binary += String.fromCharCode(...chunk);
-    }
-    return binary;
 }
 
 // AESで復号化
